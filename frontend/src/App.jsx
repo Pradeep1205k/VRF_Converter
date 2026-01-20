@@ -1,6 +1,7 @@
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 import Navbar from "./components/Navbar";
-import { AuthProvider, useAuth } from "./context/AuthContext";
+import { useAuth } from "./context/AuthContext";
+
 import Dashboard from "./pages/Dashboard";
 import History from "./pages/History";
 import Images from "./pages/Images";
@@ -11,12 +12,15 @@ import Register from "./pages/Register";
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
+
   if (loading) {
     return <div className="py-20 text-center">Loading...</div>;
   }
+
   if (!user) {
     return <Navigate to="/login" replace />;
   }
+
   return children;
 };
 
@@ -42,12 +46,7 @@ const AppShell = () => (
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/upload"
-            element={
-              <Navigate to="/dashboard" replace />
-            }
-          />
+          <Route path="/upload" element={<Navigate to="/dashboard" replace />} />
           <Route
             path="/images"
             element={
@@ -88,12 +87,6 @@ const AppShell = () => (
   </div>
 );
 
-const App = () => (
-  <AuthProvider>
-    <BrowserRouter>
-      <AppShell />
-    </BrowserRouter>
-  </AuthProvider>
-);
-
-export default App;
+export default function App() {
+  return <AppShell />;
+}
