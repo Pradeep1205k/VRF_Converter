@@ -12,32 +12,46 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const access = localStorage.getItem(ACCESS_KEY);
-    if (access) {
-      setAuthToken(access);
-      api
-        .get("/auth/me")
-        .then((res) => setUser(res.data))
-        .catch(() => {
-          localStorage.removeItem(ACCESS_KEY);
-          localStorage.removeItem(REFRESH_KEY);
-          setAuthToken(null);
-        })
-        .finally(() => setLoading(false));
-    } else {
+
+    // No token → stop loading immediately
+    if (!access) {
       setLoading(false);
+      return;
     }
+
+    setAuthToken(access);
+
+    api
+      .get("/auth/me")
+      .then((res) => {
+        setUser(res.data);
+      })
+      .catch((err) => {
+        console.warn("Auth check failed, logging out", err);
+        localStorage.removeItem(ACCESS_KEY);
+        localStorage.removeItem(REFRESH_KEY);
+        setAuthToken(null);
+        setUser(null);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, []);
 
   const login = async (email, password) => {
     const form = new URLSearchParams();
     form.append("username", email);
     form.append("password", password);
+
     const response = await api.post("/auth/login", form, {
-      headers: { "Content-Type": "application/x-www-form-urlencoded" }
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
     });
+
     localStorage.setItem(ACCESS_KEY, response.data.access_token);
     localStorage.setItem(REFRESH_KEY, response.data.refresh_token);
+
     setAuthToken(response.data.access_token);
+
     const me = await api.get("/auth/me");
     setUser(me.data);
   };
@@ -59,7 +73,11 @@ export const AuthProvider = ({ children }) => {
     [user, loading]
   );
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
 export const useAuth = () => {
