@@ -15,13 +15,13 @@ Web-based video conversion platform built with FastAPI, FFmpeg, React, and Tailw
 ```
 video-manipulator/
 +-- backend/
-�   +-- app/
-�   +-- requirements.txt
-�   +-- Dockerfile
+│   +-- app/
+│   +-- requirements.txt
+│   +-- Dockerfile
 +-- frontend/
-�   +-- src/
-�   +-- public/
-�   +-- vite.config.js
+│   +-- src/
+│   +-- public/
+│   +-- vite.config.js
 +-- README.md
 +-- docker-compose.yml
 ```
@@ -29,21 +29,42 @@ video-manipulator/
 ## Local Setup
 
 ### Backend
-1) Install FFmpeg
-2) Create a virtualenv and install deps:
+
+#### 1. Install FFmpeg
+
+**Option A: Manual Download (Recommended for Windows)**
+- Download from https://ffmpeg.org/download.html (Windows build)
+- Extract to `C:\ffmpeg`
+- Add `C:\ffmpeg\bin` to system PATH:
+  - Right-click "This PC" → Properties → Advanced system settings → Environment Variables
+  - Add `C:\ffmpeg\bin` to PATH
+- Verify: Open new PowerShell and run `ffmpeg -version`
+
+**Option B: Chocolatey (requires admin)**
+```powershell
+# Run PowerShell as Administrator
+choco install ffmpeg
+```
+
+#### 2. Create Virtual Environment & Install Dependencies
+
 ```bash
 cd backend
 python -m venv .venv
-. .venv/bin/activate  # or .venv\Scripts\activate on Windows
+.\.venv\Scripts\activate  # Windows PowerShell
 pip install -r requirements.txt
 ```
-3) Create `.env`:
+
+#### 3. Create `.env` File
+
 ```bash
 cp .env.example .env
 ```
-4) Run the API:
+
+#### 4. Run the API
+
 ```bash
-uvicorn app.main:app --reload
+python -m uvicorn app.main:app --reload
 ```
 
 API docs: `http://localhost:8000/docs`
@@ -91,10 +112,42 @@ Frontend (`frontend/.env`):
 - `GET /api/video/thumbnail/{video_id}`
 
 ## Deployment
-- Frontend: build with `npm run build` and deploy `frontend/dist` to GitHub Pages
-- Backend: Docker-ready, deploy to Render/Railway/EC2
+
+### Backend (Render)
+1. Go to https://render.com → New → Web Service
+2. Connect GitHub repo, set Root directory: `backend`
+3. Build command: `pip install -r requirements.txt`
+4. Start command: `python -m uvicorn app.main:app --host 0.0.0.0 --port 8000`
+5. Set environment variables (see above)
+6. Add FFmpeg in build steps (buildpack or init script)
+
+### Frontend (GitHub Pages)
+```bash
+cd frontend
+npm install
+npm run build
+npm install --save-dev gh-pages
+```
+
+Update `package.json`:
+```json
+{
+  "homepage": "https://<username>.github.io/<repo>",
+  "scripts": {
+    "deploy": "gh-pages -d dist"
+  }
+}
+```
+
+Deploy:
+```bash
+npm run build
+npm run deploy
+```
+
+Then set source to `gh-pages` branch in GitHub → Settings → Pages.
 
 ## Notes
-- JWTs are stored client-side; for production, prefer httpOnly cookies and HTTPS.
+- JWTs are stored client-side; for production, use httpOnly cookies and HTTPS.
 - FFmpeg must be available on the backend host.
-# VRF_Converter
+- On Windows, use `python -m uvicorn` if `uvicorn` command is not found.
